@@ -1,7 +1,7 @@
+import { run } from '@ember/runloop';
 import { module } from 'qunit';
 import { test } from 'ember-qunit';
 import startApp from '../../helpers/start-app';
-import Ember from 'ember';
 import Token from 'ember-simple-auth-token/authorizers/token';
 import Session from 'ember-simple-auth/internal-session';
 import EphemeralStore from 'ember-simple-auth/session-stores/ephemeral';
@@ -19,7 +19,7 @@ module('Token Authenticator', {
     });
   },
   afterEach: () => {
-    Ember.run(App, App.destroy);
+    run(App, App.destroy);
   }
 });
 

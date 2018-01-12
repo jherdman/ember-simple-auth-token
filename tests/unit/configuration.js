@@ -1,7 +1,7 @@
+import { run } from '@ember/runloop';
 import { module } from 'qunit';
 import { test } from 'ember-qunit';
 import startApp from './../helpers/start-app';
-import Ember from 'ember';
 import Configuration from 'ember-simple-auth-token/configuration';
 
 var App;
@@ -11,7 +11,7 @@ module('Configuration', {
     App = startApp();
   },
   teardown: () => {
-    Ember.run(App, App.destroy);
+    run(App, App.destroy);
   }
 });
 

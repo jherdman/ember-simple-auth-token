@@ -1,8 +1,9 @@
+import { run } from '@ember/runloop';
+import $ from 'jquery';
 import { module } from 'qunit';
 import { test } from 'ember-qunit';
 import sinon from 'sinon';
 import startApp from '../../helpers/start-app';
-import Ember from 'ember';
 import Token from 'ember-simple-auth-token/authenticators/token';
 import Configuration from 'ember-simple-auth-token/configuration';
 
@@ -15,12 +16,12 @@ module('Token Authenticator', {
     App.server = sinon.fakeServer.create();
     App.server.autoRespond = true;
     App.authenticator = Token.create();
-    sinon.spy(Ember.$, 'ajax');
+    sinon.spy($, 'ajax');
   },
   afterEach: () => {
-    Ember.$.ajax.restore();
+    $.ajax.restore();
     App.xhr.restore();
-    Ember.run(App, App.destroy);
+    run(App, App.destroy);
   }
 });
 
@@ -76,7 +77,7 @@ test('#restore resolves with the correct data', assert => {
     '{ "token": "secret token!" }'
   ]);
 
-  Ember.run(() => {
+  run(() => {
     App.authenticator.restore(properties).then(content => {
       assert.deepEqual(content, properties);
     });
@@ -103,7 +104,7 @@ test('#restore resolves custom token with the correct data', assert => {
     '{ "token": "secret token!" }'
   ]);
 
-  Ember.run(() => {
+  run(() => {
     App.authenticator.restore(properties).then(content => {
       assert.deepEqual(content, properties);
     });
@@ -118,8 +119,8 @@ test('#authenticate sends an AJAX request to the sign in endpoint', assert => {
 
   App.authenticator.authenticate(credentials);
 
-  Ember.run(() => {
-    var args = Ember.$.ajax.getCall(0).args[0];
+  run(() => {
+    var args = $.ajax.getCall(0).args[0];
     delete args.beforeSend;
     assert.deepEqual(args, {
       url: '/api/token-auth/',
@@ -144,8 +145,8 @@ test('#authenticate sends an AJAX request to the sign in endpoint with custom fi
   App.authenticator = Token.create();
   App.authenticator.authenticate(credentials);
 
-  Ember.run(() => {
-    var args = Ember.$.ajax.getCall(0).args[0];
+  run(() => {
+    var args = $.ajax.getCall(0).args[0];
     delete args.beforeSend;
 
     assert.deepEqual(args, {
@@ -194,8 +195,8 @@ test('#authenticate sends an AJAX request with custom headers', assert => {
   App.authenticator = Token.create();
   App.authenticator.authenticate(credentials);
 
-  Ember.run(() => {
-    var args = Ember.$.ajax.getCall(0).args[0];
+  run(() => {
+    var args = $.ajax.getCall(0).args[0];
     delete args.beforeSend;
     assert.deepEqual(args, {
       url: '/api/token-auth/',

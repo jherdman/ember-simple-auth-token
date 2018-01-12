@@ -1,8 +1,11 @@
-import Ember from 'ember';
+import $ from 'jquery';
+import { run, cancel, later } from '@ember/runloop';
+import { isEmpty } from '@ember/utils';
+import { Promise as EmberPromise, resolve } from 'rsvp';
+import EmberObject, { get } from '@ember/object';
+import { assign } from '@ember/polyfills';
 import Configuration from '../configuration';
 import TokenAuthenticator from './token';
-
-const assign = Ember.assign || Ember.merge;
 
 /**
   JWT (JSON Web Token) Authenticator that supports automatic token refresh.
@@ -94,25 +97,25 @@ export default TokenAuthenticator.extend({
                                  in the session being authenticated
   */
   restore(data) {
-    const dataObject = Ember.Object.create(data);
+    const dataObject = EmberObject.create(data);
 
-    return new Ember.RSVP.Promise((resolve, reject) => {
+    return new EmberPromise((resolve, reject) => {
       const now = this.getCurrentTime();
       const token = dataObject.get(this.tokenPropertyName);
       const refreshToken = dataObject.get(this.refreshTokenPropertyName);
       let expiresAt = dataObject.get(this.tokenExpireName);
 
-      if (Ember.isEmpty(token)) {
+      if (isEmpty(token)) {
         return reject(new Error('empty token'));
       }
 
-      if (Ember.isEmpty(expiresAt)) {
+      if (isEmpty(expiresAt)) {
         // Fetch the expire time from the token data since `expiresAt`
         // wasn't included in the data object that was passed in.
         const tokenData = this.getTokenData(token);
 
         expiresAt = tokenData[this.tokenExpireName];
-        if (Ember.isEmpty(expiresAt)) {
+        if (isEmpty(expiresAt)) {
           return resolve(data);
         }
       }
@@ -161,12 +164,12 @@ export default TokenAuthenticator.extend({
                                  otherwise
   */
   authenticate(credentials, headers) {
-    return new Ember.RSVP.Promise((resolve, reject) => {
+    return new EmberPromise((resolve, reject) => {
       const data = this.getAuthenticateData(credentials);
 
       this.makeRequest(this.serverTokenEndpoint, data, headers)
         .then((response) => {
-          Ember.run(() => {
+          run(() => {
             try {
               const sessionData = this.handleAuthResponse(response);
 
@@ -176,7 +179,7 @@ export default TokenAuthenticator.extend({
             }
           });
         }, (xhr) => {
-          Ember.run(() => { reject(xhr.responseJSON || xhr.responseText); });
+          run(() => { reject(xhr.responseJSON || xhr.responseText); });
         });
     });
   },
@@ -198,10 +201,10 @@ export default TokenAuthenticator.extend({
       const now = this.getCurrentTime();
       const wait = (expiresAt - now - this.refreshLeeway) * 1000;
 
-      if (!Ember.isEmpty(refreshToken) && !Ember.isEmpty(expiresAt) && wait > 0) {
-        Ember.run.cancel(this._refreshTokenTimeout);
+      if (!isEmpty(refreshToken) && !isEmpty(expiresAt) && wait > 0) {
+        cancel(this._refreshTokenTimeout);
         delete this._refreshTokenTimeout;
-        this._refreshTokenTimeout = Ember.run.later(this, this.refreshAccessToken, refreshToken, wait);
+        this._refreshTokenTimeout = later(this, this.refreshAccessToken, refreshToken, wait);
       }
     }
   },
@@ -223,10 +226,10 @@ export default TokenAuthenticator.extend({
   refreshAccessToken(token, headers) {
     const data = this.makeRefreshData(token);
 
-    return new Ember.RSVP.Promise((resolve, reject) => {
+    return new EmberPromise((resolve, reject) => {
       this.makeRequest(this.serverTokenRefreshEndpoint, data, headers)
         .then((response) => {
-          Ember.run(() => {
+          run(() => {
             try {
               const sessionData = this.handleAuthResponse(response);
 
@@ -237,14 +240,9 @@ export default TokenAuthenticator.extend({
             }
           });
         }, (xhr, status, error) => {
-          Ember.Logger.warn(
-            'Access token could not be refreshed - ' +
-            `server responded with ${error}.`
-          );
-
           this.handleTokenRefreshFail(xhr.status);
 
-          reject();
+          reject(`Access token could not be refreshed - server responded with ${error}.`);
         });
     });
   },
@@ -297,7 +295,7 @@ export default TokenAuthenticator.extend({
     @private
   */
   makeRequest(url, data, headers) {
-    return Ember.$.ajax({
+    return $.ajax({
       url: url,
       method: 'POST',
       data: JSON.stringify(data),
@@ -326,9 +324,9 @@ export default TokenAuthenticator.extend({
     @return {Ember.RSVP.Promise} A resolving promise
   */
   invalidate() {
-    Ember.run.cancel(this._refreshTokenTimeout);
+    cancel(this._refreshTokenTimeout);
     delete this._refreshTokenTimeout;
-    return new Ember.RSVP.resolve();
+    return new resolve();
   },
 
   /**
@@ -347,22 +345,22 @@ export default TokenAuthenticator.extend({
     @private
    */
   handleAuthResponse(response) {
-    const token = Ember.get(response, this.tokenPropertyName);
+    const token = get(response, this.tokenPropertyName);
 
-    if (Ember.isEmpty(token)) {
+    if (isEmpty(token)) {
       throw new Error('Token is empty. Please check your backend response.');
     }
 
     const tokenData = this.getTokenData(token);
-    const expiresAt = Ember.get(tokenData, this.tokenExpireName);
+    const expiresAt = get(tokenData, this.tokenExpireName);
     const tokenExpireData = {};
 
     tokenExpireData[this.tokenExpireName] = expiresAt;
 
     if (this.refreshAccessTokens) {
-      const refreshToken = Ember.get(response, this.refreshTokenPropertyName);
+      const refreshToken = get(response, this.refreshTokenPropertyName);
 
-      if (Ember.isEmpty(refreshToken)) {
+      if (isEmpty(refreshToken)) {
         throw new Error('Refresh token is empty. Please check your backend response.');
       }
 

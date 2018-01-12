@@ -1,4 +1,8 @@
-import Ember from 'ember';
+import $ from 'jquery';
+import { run } from '@ember/runloop';
+import { isEmpty } from '@ember/utils';
+import { Promise as EmberPromise, resolve } from 'rsvp';
+import EmberObject, { computed } from '@ember/object';
 import Base from 'ember-simple-auth/authenticators/base';
 import Configuration from '../configuration';
 
@@ -74,7 +78,17 @@ export default Base.extend({
     @type Object
     @default {}
   */
-  headers: {},
+  headers: computed({
+    get() {
+      return this.get('_headers') || {};
+    },
+
+    set(_, newHeaders) {
+      this.set('_headers', newHeaders);
+
+      return newHeaders;
+    },
+  }),
 
   /**
     @method init
@@ -98,10 +112,10 @@ export default Base.extend({
     @return {Ember.RSVP.Promise} A promise that when it resolves results in the session being authenticated
   */
   restore(properties) {
-    const propertiesObject = Ember.Object.create(properties);
+    const propertiesObject = EmberObject.create(properties);
 
-    return new Ember.RSVP.Promise((resolve, reject) => {
-      if (!Ember.isEmpty(propertiesObject.get(this.tokenPropertyName))) {
+    return new EmberPromise((resolve, reject) => {
+      if (!isEmpty(propertiesObject.get(this.tokenPropertyName))) {
         resolve(properties);
       } else {
         reject();
@@ -124,15 +138,15 @@ export default Base.extend({
     @return {Ember.RSVP.Promise} A promise that resolves when an auth token is successfully acquired from the server and rejects otherwise
   */
   authenticate(credentials, headers) {
-    return new Ember.RSVP.Promise((resolve, reject) => {
+    return new EmberPromise((resolve, reject) => {
       const data = this.getAuthenticateData(credentials);
 
       this.makeRequest(data, headers).then(response => {
-        Ember.run(() => {
+        run(() => {
           resolve(this.getResponseData(response));
         });
       }, xhr => {
-        Ember.run(() => { reject(xhr.responseJSON || xhr.responseText); });
+        run(() => { reject(xhr.responseJSON || xhr.responseText); });
       });
     });
   },
@@ -170,7 +184,7 @@ export default Base.extend({
     @return {Ember.RSVP.Promise} A resolving promise
   */
   invalidate() {
-    return Ember.RSVP.resolve();
+    return resolve();
   },
 
   /**
@@ -180,7 +194,7 @@ export default Base.extend({
     @private
   */
   makeRequest(data, headers) {
-    return Ember.$.ajax({
+    return $.ajax({
       url: this.serverTokenEndpoint,
       method: 'POST',
       data: JSON.stringify(data),

@@ -1,10 +1,11 @@
-import Ember from 'ember';
+import { inject as service } from '@ember/service';
+import Controller from '@ember/controller';
 
-export default Ember.Controller.extend({
+export default Controller.extend({
   identification: 'admin',
   password: 'abc123',
 
-  session: Ember.inject.service('session'),
+  session: service('session'),
 
   actions: {
     authenticate: function() {
