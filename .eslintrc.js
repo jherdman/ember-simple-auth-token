@@ -25,11 +25,12 @@ module.exports = {
         'ember-cli-build.js',
         'config/**/*.js',
         'tests/dummy/config/**/*.js',
-        'server/**/*.js',
+        'server/**/*',
       ],
       excludedFiles: [
         'app/**',
-        'addon/**'
+        'addon/**',
+        'tests/dummy/app/**',
       ],
       parserOptions: {
         sourceType: 'script',
