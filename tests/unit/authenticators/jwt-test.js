@@ -29,20 +29,20 @@ module('JWT Authenticator', {
     App.server = sinon.fakeServer.create();
     App.server.autoRespond = true;
     App.authenticator = JWT.create();
-    sinon.spy(run, 'cancel');
-    sinon.stub(run, 'later').callsFake((scope, callback, args) => {
-      callback.call(scope, args);
-    });
-    sinon.spy($, 'ajax');
+    //sinon.spy(run, 'cancel');
+    //sinon.stub(run, 'later').callsFake((scope, callback, args) => {
+    //  callback.call(scope, args);
+    //});
+    //sinon.spy($, 'ajax');
 
   },
   afterEach() {
     run(App, App.destroy);
-    $.ajax.restore();
+    //$.ajax.restore();
 
     App.xhr.restore();
-    cancel.restore();
-    later.restore();
+    //cancel.restore();
+    //later.restore();
   }
 });
 
